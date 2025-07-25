@@ -128,13 +128,12 @@ class MiniMindVLM(MiniMindForCausalLM):
             if len(pixel_values.shape) == 6:
                 pixel_values = pixel_values.squeeze(2)
             bs, num, c, im_h, im_w = pixel_values.shape
-            stack_dim = 1 if bs > 1 else 0
+            stack_dim = 1 if bs > 1 else 0#-?why stack by dim 0 when bs == 0?
             vision_tensors = torch.stack([
                 MiniMindVLM.get_image_embeddings(pixel_values[:, i, :, :, :], self.vision_encoder)
                 for i in range(num)
             ], dim=stack_dim)
-            hidden_states = self.count_vision_proj(tokens=input_ids, h=hidden_states, vision_tensors=vision_tensors,
-                                                   seqlen=input_ids.shape[1])
+            hidden_states = self.count_vision_proj(tokens=input_ids, h=hidden_states, vision_tensors=vision_tensors,seqlen=input_ids.shape[1])
 
         position_embeddings = (
             self.model.freqs_cos[start_pos:start_pos + seq_length],

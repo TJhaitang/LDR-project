@@ -420,7 +420,7 @@ class MiniMindForCausalLM(PreTrainedModel, GenerationMixin):
         super().__init__(self.config)
         self.model = MiniMindModel(self.config)
         self.lm_head = nn.Linear(self.config.hidden_size, self.config.vocab_size, bias=False)
-        self.model.embed_tokens.weight = self.lm_head.weight
+        self.model.embed_tokens.weight = self.lm_head.weight#-?为什么可以这么做，这么做的目的是什么？
         self.OUT = CausalLMOutputWithPast()
 
     def forward(self,

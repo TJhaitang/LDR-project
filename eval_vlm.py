@@ -16,21 +16,21 @@ def count_parameters(model):
 
 
 def init_model(lm_config, device):
-    tokenizer = AutoTokenizer.from_pretrained('./model')
+    tokenizer = AutoTokenizer.from_pretrained('/home/haitang/CODE/LDR-project/model')
     if args.load == 0:
         moe_path = '_moe' if args.use_moe else ''
         modes = {0: 'pretrain_vlm', 1: 'sft_vlm', 2: 'sft_vlm_multi'}
-        ckp = f'./{args.out_dir}/{modes[args.model_mode]}_{args.hidden_size}{moe_path}.pth'
-        model = MiniMindVLM(lm_config, vision_model_path="./model/vision_model/clip-vit-base-patch16")
+        ckp = f'/home/haitang/CODE/LDR-project/out/{modes[args.model_mode]}_{args.hidden_size}{moe_path}.pth'
+        model = MiniMindVLM(lm_config, vision_model_path="/home/haitang/Downloads/clip")
         state_dict = torch.load(ckp, map_location=device)
         model.load_state_dict({k: v for k, v in state_dict.items() if 'mask' not in k}, strict=False)
     else:
         transformers_model_path = 'MiniMind2-Small-V'
         tokenizer = AutoTokenizer.from_pretrained(transformers_model_path)
         model = AutoModelForCausalLM.from_pretrained(transformers_model_path, trust_remote_code=True)
-        model.vision_encoder, model.processor = MiniMindVLM.get_vision_model("./model/vision_model/clip-vit-base-patch16")
+        model.vision_encoder, model.processor = MiniMindVLM.get_vision_model("/home/haitang/Downloads/clip")
 
-    print(f'VLM参数量：{sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.3f} 百万')
+    print(f'VLM参数量：{sum(p.numel() for. p in model.parameters() if p.requires_grad) / 1e6:.3f} 百万')
 
     vision_model, preprocess = model.vision_encoder, model.processor
     return model.eval().to(device), tokenizer, vision_model.eval().to(device), preprocess
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # 默认单图推理，设置为2为多图推理
     parser.add_argument('--use_multi', default=1, type=int)
     parser.add_argument('--stream', default=True, type=bool)
-    parser.add_argument('--load', default=1, type=int, help="0: 原生torch权重，1: transformers加载")
+    parser.add_argument('--load', default=0, type=int, help="0: 原生torch权重，1: transformers加载")
     parser.add_argument('--model_mode', default=1, type=int,
                         help="0: Pretrain模型，1: SFT模型，2: SFT-多图模型 (beta拓展)")
     args = parser.parse_args()
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     # 单图推理：每1个图像单独推理
     if args.use_multi == 1:
-        image_dir = './dataset/eval_images/'
+        image_dir = '/home/haitang/CODE/LDR-project/dataset/eval_images/'
         prompt = f"{model.params.image_special_token}\n描述一下这个图像的内容。"
 
         for image_file in os.listdir(image_dir):
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     # 2图推理：目录下的两个图像编码，一次性推理（power by ）
     if args.use_multi == 2:
         args.model_mode = 2
-        image_dir = './dataset/eval_multi_images/bird/'
+        image_dir = '/home/haitang/CODE/LDR-project/dataset/eval_multi_images/bird/'
         prompt = (f"{lm_config.image_special_token}\n"
                   f"{lm_config.image_special_token}\n"
                   f"比较一下两张图像的异同点。")

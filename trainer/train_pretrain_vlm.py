@@ -75,6 +75,16 @@ def train_epoch(epoch, wandb):
                     loss.item(),
                     optimizer.param_groups[-1]['lr'],
                     spend_time / (step + 1) * iter_per_epoch // 60 - spend_time // 60))
+        if step %2000 ==0:
+            #根据res解码
+            pre=res.logits.argmax(dim=-1)[0]
+            #去掉无意义字符
+            pre=pre[loss_mask[0]!=0]
+            ori=Y[0][loss_mask[0]!=0]
+            res_text = tokenizer.decode(pre)
+            ori_text=tokenizer.decode(ori)
+            Logger(res_text)
+            Logger(ori_text)
 
             if (wandb is not None) and (not ddp or dist.get_rank() == 0):
                 wandb.log({"loss": loss,
@@ -98,11 +108,12 @@ def train_epoch(epoch, wandb):
 
 
 def init_model(model_config: VLMConfig):
-    tokenizer = AutoTokenizer.from_pretrained('../model', use_fast=True)
+    tokenizer = AutoTokenizer.from_pretrained('/home/haitang/CODE/LDR-project/model', use_fast=True)
     moe_path = '_moe' if model_config.use_moe else ''
     # 加载纯语言模型权重
-    ckp = f'{args.save_dir}/llm_{model_config.hidden_size}{moe_path}.pth'
-    model = MiniMindVLM(model_config, vision_model_path="../model/vision_model/clip-vit-base-patch16")
+    # ckp = f'{args.save_dir}/full_sft_{model_config.hidden_size}{moe_path}.pth'
+    ckp="/home/haitang/CODE/minimind/out/full_sft_512.pth"
+    model = MiniMindVLM(model_config, vision_model_path="/home/haitang/Downloads/clip")
     state_dict = torch.load(ckp, map_location=args.device)
     model.load_state_dict(state_dict, strict=False)
 
@@ -131,17 +142,18 @@ def init_distributed_mode():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMind-V Pretrain")
-    parser.add_argument("--out_dir", type=str, default="../out")
+    parser.add_argument("--out_dir", type=str, default="/home/haitang/CODE/LDR-project/out")
     parser.add_argument("--epochs", type=int, default=4)
-    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--batch_size", type=int, default=24)
     parser.add_argument("--learning_rate", type=float, default=4e-4)
     parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu")
+    # parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--dtype", type=str, default="bfloat16")
     parser.add_argument("--use_wandb", default=False, action="store_true")
     parser.add_argument("--wandb_project", type=str, default="MiniMind-V")
     parser.add_argument("--num_workers", type=int, default=8)
-    parser.add_argument("--data_path", type=str, default="../dataset/pretrain_data.jsonl")
-    parser.add_argument("--images_path", type=str, default="../dataset/pretrain_images")
+    parser.add_argument("--data_path", type=str, default="/home/haitang/Downloads/minimind-v_dataset/pretrain_data.jsonl")
+    parser.add_argument("--images_path", type=str, default="/home/haitang/Downloads/minimind-v_dataset/pretrain_images")
     parser.add_argument("--ddp", action="store_true")
     parser.add_argument("--accumulation_steps", type=int, default=1)
     parser.add_argument("--grad_clip", type=float, default=1.0)

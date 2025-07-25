@@ -98,11 +98,11 @@ def train_epoch(epoch, wandb):
 
 
 def init_model(model_config: VLMConfig):
-    tokenizer = AutoTokenizer.from_pretrained('../model')
+    tokenizer = AutoTokenizer.from_pretrained('/home/haitang/CODE/LDR-project/model')
     moe_path = '_moe' if model_config.use_moe else ''
     ckp = f'{args.save_dir}/pretrain_vlm_{model_config.hidden_size}{moe_path}.pth'
 
-    model = MiniMindVLM(model_config, vision_model_path="../model/vision_model/clip-vit-base-patch16")
+    model = MiniMindVLM(model_config, vision_model_path="/home/haitang/Downloads/clip")
     state_dict = torch.load(ckp, map_location=args.device)
     model.load_state_dict(state_dict, strict=False)
 
@@ -132,23 +132,23 @@ def init_distributed_mode():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMind-V Pretrain")
-    parser.add_argument("--out_dir", type=str, default="../out")
+    parser.add_argument("--out_dir", type=str, default="/home/haitang/CODE/LDR-project/out")
     parser.add_argument("--epochs", type=int, default=2)
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--batch_size", type=int, default=6)
     parser.add_argument("--learning_rate", type=float, default=1e-6)
     parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--dtype", type=str, default="bfloat16")
     parser.add_argument("--use_wandb", default=False, action="store_true")
     parser.add_argument("--wandb_project", type=str, default="MiniMind-V")
     parser.add_argument("--num_workers", type=int, default=8)
-    parser.add_argument("--data_path", type=str, default="../dataset/sft_data.jsonl")
-    parser.add_argument("--images_path", type=str, default="../dataset/sft_images")
+    parser.add_argument("--data_path", type=str, default="/home/haitang/Downloads/minimind-v_dataset/sft_data.jsonl")
+    parser.add_argument("--images_path", type=str, default="/home/haitang/Downloads/minimind-v_dataset/sft_images")
     parser.add_argument("--ddp", action="store_true")
     parser.add_argument("--accumulation_steps", type=int, default=1)
     parser.add_argument("--grad_clip", type=float, default=1.0)
     parser.add_argument("--warmup_iters", type=int, default=0)
-    parser.add_argument("--log_interval", type=int, default=10)
-    parser.add_argument("--save_interval", type=int, default=10)
+    parser.add_argument("--log_interval", type=int, default=100)
+    parser.add_argument("--save_interval", type=int, default=100)
     parser.add_argument('--local_rank', type=int, default=-1)
     parser.add_argument('--hidden_size', default=512, type=int)
     parser.add_argument('--num_hidden_layers', default=8, type=int)
